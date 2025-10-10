@@ -1,112 +1,229 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { firebaseService, NutritionEntry } from '@/services/firebaseService';
 
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
+export default function HistoryScreen() {
+  const [nutritionHistory, setNutritionHistory] = useState<NutritionEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    loadNutritionHistory();
+  }, []);
+
+  const loadNutritionHistory = async () => {
+    try {
+      const history = await firebaseService.getNutritionHistory();
+      setNutritionHistory(history);
+    } catch (error) {
+      console.error('Error loading nutrition history:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadNutritionHistory();
+    setRefreshing(false);
+  };
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date));
+  };
+
+  const formatCalories = (calories: number) => {
+    return `${Math.round(calories)} kcal`;
+  };
+
+  if (isLoading) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.title}>Nutrition History</ThemedText>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ThemedText>Loading your nutrition history...</ThemedText>
+        </View>
       </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    );
+  }
+
+  return (
+    <ThemedView style={styles.container}>
+      <View style={styles.header}>
+        <ThemedText type="title" style={styles.title}>Nutrition History</ThemedText>
+        <ThemedText style={styles.subtitle}>Your saved nutrition entries</ThemedText>
+      </View>
+
+      {nutritionHistory.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="restaurant" size={80} color="#ccc" />
+          <ThemedText style={styles.emptyTitle}>No History Yet</ThemedText>
+          <ThemedText style={styles.emptyText}>
+            Start by taking photos of your meals to build your nutrition history
+          </ThemedText>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+        >
+          {nutritionHistory.map((entry, index) => (
+            <TouchableOpacity key={entry.id || index} style={styles.entryCard}>
+              <View style={styles.entryHeader}>
+                <ThemedText style={styles.foodName}>{entry.foodName}</ThemedText>
+                <ThemedText style={styles.entryDate}>
+                  {formatDate(entry.timestamp)}
+                </ThemedText>
+              </View>
+              
+              <View style={styles.nutritionSummary}>
+                <View style={styles.nutritionItem}>
+                  <Ionicons name="flame" size={16} color="#FF6B6B" />
+                  <ThemedText style={styles.nutritionValue}>
+                    {formatCalories(entry.nutritionData.nf_calories)}
+                  </ThemedText>
+                </View>
+                
+                <View style={styles.nutritionItem}>
+                  <Ionicons name="fitness" size={16} color="#4ECDC4" />
+                  <ThemedText style={styles.nutritionValue}>
+                    {entry.nutritionData.nf_protein.toFixed(1)}g protein
+                  </ThemedText>
+                </View>
+                
+                <View style={styles.nutritionItem}>
+                  <Ionicons name="leaf" size={16} color="#45B7D1" />
+                  <ThemedText style={styles.nutritionValue}>
+                    {entry.nutritionData.nf_total_carbohydrate.toFixed(1)}g carbs
+                  </ThemedText>
+                </View>
+                
+                <View style={styles.nutritionItem}>
+                  <Ionicons name="water" size={16} color="#96CEB4" />
+                  <ThemedText style={styles.nutritionValue}>
+                    {entry.nutritionData.nf_total_fat.toFixed(1)}g fat
+                  </ThemedText>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
   },
-  titleContainer: {
+  header: {
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e5e9',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#999',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  entryCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  entryHeader: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  foodName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+  },
+  entryDate: {
+    fontSize: 14,
+    color: '#666',
+  },
+  nutritionSummary: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  nutritionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  nutritionValue: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
+    color: '#333',
   },
 });
