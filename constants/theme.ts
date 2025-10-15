@@ -5,17 +5,27 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// Jamaican flag colors
+const jamaicanGreen = '#009639'; // Jamaican green
+const jamaicanGold = '#FFD700'; // Jamaican gold
+const jamaicanBlack = '#000000'; // Black accent
+
+const tintColorLight = jamaicanGreen;
+const tintColorDark = jamaicanGold;
 
 export const Colors = {
   light: {
-    text: '#11181C',
+    text: jamaicanBlack,
     background: '#fff',
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    icon: '#666',
+    tabIconDefault: '#666',
     tabIconSelected: tintColorLight,
+    primary: jamaicanGreen,
+    secondary: jamaicanGold,
+    accent: jamaicanBlack,
+    cardBackground: '#f8f9fa',
+    border: '#e0e0e0',
   },
   dark: {
     text: '#ECEDEE',
@@ -24,6 +34,11 @@ export const Colors = {
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
+    primary: jamaicanGreen,
+    secondary: jamaicanGold,
+    accent: jamaicanBlack,
+    cardBackground: '#2a2a2a',
+    border: '#444',
   },
 };
 
