@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { NutritionData } from '../services/nutritionService';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
-import { NutritionData } from '../services/nutritionService';
 
 interface NutritionDisplayProps {
   nutritionData: NutritionData;
@@ -130,14 +130,18 @@ export default function NutritionDisplay({ nutritionData, onClose, onSave }: Nut
         )}
       </ScrollView>
 
-      {onSave && (
-        <View style={styles.footer}>
+      <View style={styles.footer}>
+        {onSave && (
           <TouchableOpacity style={styles.saveButton} onPress={onSave}>
             <Ionicons name="save" size={20} color="white" />
             <ThemedText style={styles.saveButtonText}>Save to History</ThemedText>
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+        <TouchableOpacity style={styles.closeFooterButton} onPress={onClose}>
+          <Ionicons name="close" size={20} color="white" />
+          <ThemedText style={styles.closeFooterButtonText}>Close</ThemedText>
+        </TouchableOpacity>
+      </View>
     </ThemedView>
   );
 }
@@ -229,6 +233,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: '#e1e5e9',
+    gap: 10,
   },
   saveButton: {
     backgroundColor: '#007AFF',
@@ -239,6 +244,20 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   saveButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  closeFooterButton: {
+    backgroundColor: '#8E8E93',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    borderRadius: 10,
+  },
+  closeFooterButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',

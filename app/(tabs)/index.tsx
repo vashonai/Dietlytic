@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import CameraComponent from '@/components/CameraComponent';
 import FoodSelection from '@/components/FoodSelection';
 import NutritionDisplay from '@/components/NutritionDisplay';
-import { VisionService, FoodDetection } from '@/services/visionService';
-import { NutritionService, NutritionData } from '@/services/nutritionService';
-import { firebaseService } from '@/services/firebaseService';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 import { API_KEYS } from '@/config/apiKeys';
+import { NutritionData, NutritionService } from '@/services/nutritionService';
+import { supabaseService } from '@/services/supabaseService';
+import { FoodDetection, VisionService } from '@/services/visionService';
 
 export default function HomeScreen() {
   const [showCamera, setShowCamera] = useState(false);
@@ -89,12 +88,13 @@ export default function HomeScreen() {
     if (!nutritionData || !selectedFood) return;
 
     try {
-      await firebaseService.saveNutritionEntry({
-        foodName: selectedFood.food,
-        nutritionData: nutritionData,
-      });
+      await supabaseService.saveNutritionEntry(
+        selectedFood.food,
+        nutritionData,
+        undefined // imageUri - could be passed from camera if needed
+      );
       
-      Alert.alert('Saved!', 'Nutrition data has been saved to your history.');
+      Alert.alert('Saved!', `Nutrition data for "${selectedFood.food}" has been saved to your history.`);
       handleCloseNutrition();
     } catch (error) {
       console.error('Error saving nutrition data:', error);

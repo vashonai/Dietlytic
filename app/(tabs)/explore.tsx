@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { firebaseService, NutritionEntry } from '@/services/firebaseService';
+import { NutritionEntry, supabaseService } from '@/services/supabaseService';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function HistoryScreen() {
   const [nutritionHistory, setNutritionHistory] = useState<NutritionEntry[]>([]);
@@ -16,7 +16,7 @@ export default function HistoryScreen() {
 
   const loadNutritionHistory = async () => {
     try {
-      const history = await firebaseService.getNutritionHistory();
+      const history = await supabaseService.getNutritionHistory();
       setNutritionHistory(history);
     } catch (error) {
       console.error('Error loading nutrition history:', error);
@@ -80,46 +80,51 @@ export default function HistoryScreen() {
           }
           showsVerticalScrollIndicator={false}
         >
-          {nutritionHistory.map((entry, index) => (
-            <TouchableOpacity key={entry.id || index} style={styles.entryCard}>
-              <View style={styles.entryHeader}>
-                <ThemedText style={styles.foodName}>{entry.foodName}</ThemedText>
-                <ThemedText style={styles.entryDate}>
-                  {formatDate(entry.timestamp)}
-                </ThemedText>
-              </View>
-              
-              <View style={styles.nutritionSummary}>
-                <View style={styles.nutritionItem}>
-                  <Ionicons name="flame" size={16} color="#FF6B6B" />
-                  <ThemedText style={styles.nutritionValue}>
-                    {formatCalories(entry.nutritionData.nf_calories)}
+          {nutritionHistory.map((entry, index) => {
+            const firstItem = entry.items[0];
+            const foodName = firstItem?.name || entry.meal.detected_items[0] || 'Unknown Food';
+            
+            return (
+              <TouchableOpacity key={entry.id || index} style={styles.entryCard}>
+                <View style={styles.entryHeader}>
+                  <ThemedText style={styles.foodName}>{foodName}</ThemedText>
+                  <ThemedText style={styles.entryDate}>
+                    {formatDate(new Date(entry.meal.created_at))}
                   </ThemedText>
                 </View>
                 
-                <View style={styles.nutritionItem}>
-                  <Ionicons name="fitness" size={16} color="#4ECDC4" />
-                  <ThemedText style={styles.nutritionValue}>
-                    {entry.nutritionData.nf_protein.toFixed(1)}g protein
-                  </ThemedText>
+                <View style={styles.nutritionSummary}>
+                  <View style={styles.nutritionItem}>
+                    <Ionicons name="flame" size={16} color="#FF6B6B" />
+                    <ThemedText style={styles.nutritionValue}>
+                      {formatCalories(entry.meal.total_calories)}
+                    </ThemedText>
+                  </View>
+                  
+                  <View style={styles.nutritionItem}>
+                    <Ionicons name="fitness" size={16} color="#4ECDC4" />
+                    <ThemedText style={styles.nutritionValue}>
+                      {entry.meal.total_protein.toFixed(1)}g protein
+                    </ThemedText>
+                  </View>
+                  
+                  <View style={styles.nutritionItem}>
+                    <Ionicons name="leaf" size={16} color="#45B7D1" />
+                    <ThemedText style={styles.nutritionValue}>
+                      {entry.meal.total_carbs.toFixed(1)}g carbs
+                    </ThemedText>
+                  </View>
+                  
+                  <View style={styles.nutritionItem}>
+                    <Ionicons name="water" size={16} color="#96CEB4" />
+                    <ThemedText style={styles.nutritionValue}>
+                      {entry.meal.total_fat.toFixed(1)}g fat
+                    </ThemedText>
+                  </View>
                 </View>
-                
-                <View style={styles.nutritionItem}>
-                  <Ionicons name="leaf" size={16} color="#45B7D1" />
-                  <ThemedText style={styles.nutritionValue}>
-                    {entry.nutritionData.nf_total_carbohydrate.toFixed(1)}g carbs
-                  </ThemedText>
-                </View>
-                
-                <View style={styles.nutritionItem}>
-                  <Ionicons name="water" size={16} color="#96CEB4" />
-                  <ThemedText style={styles.nutritionValue}>
-                    {entry.nutritionData.nf_total_fat.toFixed(1)}g fat
-                  </ThemedText>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       )}
     </ThemedView>

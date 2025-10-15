@@ -1,4 +1,6 @@
 // Google Cloud Vision API service for food recognition
+import * as FileSystem from 'expo-file-system/legacy';
+
 export interface FoodDetection {
   food: string;
   confidence: number;
@@ -20,8 +22,11 @@ export class VisionService {
 
   async detectFood(imageUri: string): Promise<FoodDetection[]> {
     try {
+      console.log('Starting food detection for image:', imageUri);
+      
       // Convert image to base64
       const base64Image = await this.convertImageToBase64(imageUri);
+      console.log('Image converted to base64, length:', base64Image.length);
       
       const requestBody = {
         requests: [
@@ -43,6 +48,7 @@ export class VisionService {
         ],
       };
 
+      console.log('Sending request to Google Vision API...');
       const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
         method: 'POST',
         headers: {
@@ -52,36 +58,68 @@ export class VisionService {
       });
 
       if (!response.ok) {
-        throw new Error(`Vision API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Vision API error response:', errorText);
+        throw new Error(`Vision API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
-      return this.parseFoodDetections(data);
+      console.log('Vision API response received:', JSON.stringify(data, null, 2));
+      
+      const detections = this.parseFoodDetections(data);
+      console.log('Parsed detections:', detections);
+      
+      return detections;
     } catch (error) {
       console.error('Error detecting food:', error);
-      throw new Error('Failed to analyze food image');
+      throw new Error(`Failed to analyze food image: ${error.message}`);
     }
   }
 
   private async convertImageToBase64(imageUri: string): Promise<string> {
     try {
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
+      console.log('Converting image to base64:', imageUri);
       
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          // Remove data:image/jpeg;base64, prefix
-          const base64Data = base64.split(',')[1];
-          resolve(base64Data);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
+      // For React Native, we need to read the file directly
+      if (imageUri.startsWith('file://')) {
+        // Remove the file:// prefix
+        const filePath = imageUri.replace('file://', '');
+        console.log('Reading local file:', filePath);
+        
+        // Use React Native's file system to read the file
+        // Check if file exists
+        const fileInfo = await FileSystem.getInfoAsync(filePath);
+        if (!fileInfo.exists) {
+          throw new Error(`File does not exist: ${filePath}`);
+        }
+        
+        const base64 = await FileSystem.readAsStringAsync(filePath, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        
+        console.log('Successfully read file as base64, length:', base64.length);
+        return base64;
+      } else {
+        // Handle web URLs (for testing)
+        console.log('Fetching web URL:', imageUri);
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result as string;
+            // Remove data:image/jpeg;base64, prefix
+            const base64Data = base64.split(',')[1];
+            resolve(base64Data);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      }
     } catch (error) {
       console.error('Error converting image to base64:', error);
-      throw new Error('Failed to process image');
+      throw new Error(`Failed to process image: ${error.message}`);
     }
   }
 

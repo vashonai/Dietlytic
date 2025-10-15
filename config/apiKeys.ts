@@ -1,46 +1,21 @@
 // API Configuration
-// Replace these with your actual API keys
 
 export const API_KEYS = {
-  // Google Cloud Vision API
-  // Get your API key from: https://console.cloud.google.com/apis/credentials
-  GOOGLE_VISION_API_KEY: 'your-google-vision-api-key-here',
+  // Google Cloud Vision API - Unrestricted key for testing
+  GOOGLE_VISION_API_KEY: 'AIzaSyC5FOXGzhz7hdKaiI62jwBA_NSKpfT796A',
+  GOOGLE_VISION_API_URL: 'https://vision.googleapis.com/v1/images:annotate',
   
   // Nutritionix API
-  // Get your credentials from: https://www.nutritionix.com/business/api
-  NUTRITIONIX_APP_ID: 'your-nutritionix-app-id-here',
-  NUTRITIONIX_API_KEY: 'your-nutritionix-api-key-here',
+  NUTRITIONIX_APP_ID: '36da032f',
+  NUTRITIONIX_API_KEY: '4e243366692bf0ab3208e0c7cb31a7c1',
+  NUTRITIONIX_API_URL: 'https://trackapi.nutritionix.com',
   
-  // Firebase Configuration
-  // Get your config from: https://console.firebase.google.com/
-  FIREBASE_CONFIG: {
-    apiKey: "your-firebase-api-key",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "your-firebase-app-id"
-  }
+  // Supabase Configuration
+  SUPABASE_URL: 'https://omkvqlfpzqoauakzhjcc.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ta3ZxbGZwenFvYXVha3poamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0MzUwMTEsImV4cCI6MjA3NjAxMTAxMX0.5vxnrflwJarqdhv27zLmsKOMpyhLMJ8nZ7gcpmKZA6c',
 };
 
-// Instructions for setting up APIs:
-// 
-// 1. Google Cloud Vision API:
-//    - Go to https://console.cloud.google.com/
-//    - Create a new project or select existing
-//    - Enable the Vision API
-//    - Create credentials (API Key)
-//    - Replace GOOGLE_VISION_API_KEY with your key
-//
-// 2. Nutritionix API:
-//    - Go to https://www.nutritionix.com/business/api
-//    - Sign up for a free account
-//    - Get your App ID and API Key
-//    - Replace NUTRITIONIX_APP_ID and NUTRITIONIX_API_KEY
-//
-// 3. Firebase:
-//    - Go to https://console.firebase.google.com/
-//    - Create a new project
-//    - Add a web app to your project
-//    - Copy the config object
-//    - Replace FIREBASE_CONFIG with your config
+// API Keys Configuration:
+// - Google Vision API: AIzaSyC5FOXGzhz7hdKaiI62jwBA_NSKpfT796A (unrestricted for testing)
+// - Nutritionix API: 36da032f / 4e243366692bf0ab3208e0c7cb31a7c1
+// - Supabase: https://omkvqlfpzqoauakzhjcc.supabase.co
