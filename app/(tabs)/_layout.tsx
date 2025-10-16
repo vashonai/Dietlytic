@@ -25,22 +25,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Camera',
-          tabBarIcon: ({ color, focused }) => <IconSymbol size={28} name="camera.fill" color={focused ? Colors[colorScheme ?? 'light'].primary : Colors[colorScheme ?? 'light'].icon} />,
+          title: 'Dashboard',
+          tabBarIcon: ({ color, focused }) => <IconSymbol size={28} name="chart.bar.fill" color={focused ? Colors[colorScheme ?? 'light'].primary : Colors[colorScheme ?? 'light'].icon} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="food-history"
         options={{
           title: 'History',
           tabBarIcon: ({ color, focused }) => <IconSymbol size={28} name="clock.fill" color={focused ? Colors[colorScheme ?? 'light'].primary : Colors[colorScheme ?? 'light'].icon} />,
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: 'Coach',
-          tabBarIcon: ({ color, focused }) => <IconSymbol size={28} name="chatbubble.fill" color={focused ? Colors[colorScheme ?? 'light'].primary : Colors[colorScheme ?? 'light'].icon} />,
         }}
       />
       <Tabs.Screen

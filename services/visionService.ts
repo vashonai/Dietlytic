@@ -99,6 +99,11 @@ export class VisionService {
         
         console.log('Successfully read file as base64, length:', base64.length);
         return base64;
+      } else if (imageUri.startsWith('data:')) {
+        // Handle data URLs (base64 encoded images)
+        console.log('Processing data URL');
+        const base64Data = imageUri.split(',')[1];
+        return base64Data;
       } else {
         // Handle web URLs (for testing)
         console.log('Fetching web URL:', imageUri);
