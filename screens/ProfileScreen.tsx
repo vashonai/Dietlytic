@@ -2,40 +2,58 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    Image,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
-import { aiCoachService, UserGoals } from '../services/aiCoachService';
+import { useAuth } from '../contexts/AuthContext';
 import { imageUploadService } from '../services/imageUploadService';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { user, logout } = useAuth();
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [userGoals, setUserGoals] = useState<UserGoals>({
-    weightGoal: 'maintain',
-    activityLevel: 'moderate',
-    dietaryRestrictions: [],
-    healthConditions: [],
-  });
 
   const handleMenuPress = (screen: string) => {
     switch (screen) {
       case 'health':
         router.push('/screens/MyHealthScreen');
         break;
+      case 'goals':
+        router.push('/screens/GoalPlanScreen');
+        break;
       case 'history':
         router.push('/(tabs)/food-history');
         break;
+      case 'notifications':
+        Alert.alert('Notifications', 'Notification settings coming soon!');
+        break;
+      case 'settings':
+        Alert.alert('Settings', 'App settings coming soon!');
+        break;
       case 'logout':
-        // TODO: Implement logout
+        Alert.alert(
+          'Logout',
+          'Are you sure you want to logout?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Logout',
+              style: 'destructive',
+              onPress: async () => {
+                await logout();
+                router.replace('/(auth)/LoginScreen');
+              }
+            }
+          ]
+        );
         break;
     }
   };
@@ -53,23 +71,26 @@ export default function ProfileScreen() {
     }
   };
 
-  const updateUserGoals = (newGoals: Partial<UserGoals>) => {
-    const updatedGoals = { ...userGoals, ...newGoals };
-    setUserGoals(updatedGoals);
-    aiCoachService.setUserGoals(updatedGoals);
-  };
+  const menuItems = [
+    { id: 'health', title: 'My Health', icon: 'heart-outline' },
+    { id: 'goals', title: 'Goal Plans', icon: 'flag-outline' },
+    { id: 'history', title: 'My Food History', icon: 'restaurant-outline' },
+    { id: 'notifications', title: 'Notifications', icon: 'notifications-outline' },
+    { id: 'settings', title: 'App Settings', icon: 'settings-outline' },
+    { id: 'logout', title: 'Log Out', icon: 'log-out-outline' },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <ScrollView style={styles.scrollView}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F8F8" />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           {/* User Info Section */}
           <View style={styles.userInfoSection}>
             <TouchableOpacity style={styles.avatarContainer} onPress={handleProfileImageUpload}>
               <Image
-                source={{ 
-                  uri: profileImage || 'https://via.placeholder.com/80' 
+                source={{
+                  uri: profileImage || 'https://via.placeholder.com/120'
                 }}
                 style={styles.avatar}
               />
@@ -77,121 +98,44 @@ export default function ProfileScreen() {
                 <Ionicons name="camera" size={20} color="white" />
               </View>
             </TouchableOpacity>
-            <Text style={styles.userName}>John Doe</Text>
-            <Text style={styles.userEmail}>john.doe@example.com</Text>
-            <TouchableOpacity style={styles.editProfileButton} onPress={handleProfileImageUpload}>
-              <Ionicons name="camera" size={16} color="#007AFF" />
-              <Text style={styles.editProfileText}>Change Profile Picture</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Goals Section */}
-          <View style={styles.goalsSection}>
-            <Text style={styles.sectionTitle}>My Goals</Text>
-            <View style={styles.goalsContainer}>
-              <View style={styles.goalItem}>
-                <Text style={styles.goalLabel}>Weight Goal:</Text>
-                <View style={styles.goalButtons}>
-                  {['lose', 'maintain', 'gain'].map((goal) => (
-                    <TouchableOpacity
-                      key={goal}
-                      style={[
-                        styles.goalButton,
-                        userGoals.weightGoal === goal && styles.goalButtonActive
-                      ]}
-                      onPress={() => updateUserGoals({ weightGoal: goal as 'lose' | 'maintain' | 'gain' })}
-                    >
-                      <Text style={[
-                        styles.goalButtonText,
-                        userGoals.weightGoal === goal && styles.goalButtonTextActive
-                      ]}>
-                        {goal.charAt(0).toUpperCase() + goal.slice(1)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.goalItem}>
-                <Text style={styles.goalLabel}>Activity Level:</Text>
-                <View style={styles.goalButtons}>
-                  {['sedentary', 'light', 'moderate', 'active', 'very_active'].map((level) => (
-                    <TouchableOpacity
-                      key={level}
-                      style={[
-                        styles.goalButton,
-                        userGoals.activityLevel === level && styles.goalButtonActive
-                      ]}
-                      onPress={() => updateUserGoals({ activityLevel: level as any })}
-                    >
-                      <Text style={[
-                        styles.goalButtonText,
-                        userGoals.activityLevel === level && styles.goalButtonTextActive
-                      ]}>
-                        {level.replace('_', ' ').charAt(0).toUpperCase() + level.replace('_', ' ').slice(1)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            </View>
+            <Text style={styles.userName}>{user?.name || 'User'}</Text>
+            <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
           </View>
 
           {/* Menu Items */}
           <View style={styles.menuSection}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => handleMenuPress('health')}
-            >
-              <Text style={styles.menuItemText}>My Health</Text>
-              <Text style={styles.menuItemArrow}>›</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => handleMenuPress('history')}
-            >
-              <Text style={styles.menuItemText}>My Food History</Text>
-              <Text style={styles.menuItemArrow}>›</Text>
-            </TouchableOpacity>
+            {menuItems.map((item, index) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.menuItem,
+                  index === menuItems.length - 1 && styles.lastMenuItem
+                ]}
+                onPress={() => handleMenuPress(item.id)}
+              >
+                <View style={styles.menuItemLeft}>
+                  <Ionicons
+                    name={item.icon as any}
+                    size={24}
+                    color={item.id === 'logout' ? '#FF3B30' : '#4ECDC4'}
+                  />
+                  <Text style={[
+                    styles.menuItemText,
+                    item.id === 'logout' && styles.logoutText
+                  ]}>
+                    {item.title}
+                  </Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color="#CCCCCC"
+                />
+              </TouchableOpacity>
+            ))}
           </View>
-
-          {/* Logout Button */}
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={() => handleMenuPress('logout')}
-          >
-            <Text style={styles.logoutButtonText}>Logout</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
-
-      {/* Bottom Tab Navigation */}
-      <View style={styles.bottomTabs}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => router.push('/(tabs)')}
-        >
-          <Text style={styles.tabIcon}>📊</Text>
-          <Text style={styles.tabLabel}>Dashboard</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => router.push('/(tabs)/food-history')}
-        >
-          <Text style={styles.tabIcon}>📝</Text>
-          <Text style={styles.tabLabel}>History</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabItem, styles.activeTab]}
-          onPress={() => router.push('/(tabs)/profile')}
-        >
-          <Text style={styles.tabIcon}>👤</Text>
-          <Text style={[styles.tabLabel, styles.activeTabLabel]}>Profile</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -199,7 +143,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F8F8F8',
   },
   scrollView: {
     flex: 1,
@@ -207,11 +151,12 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingTop: 20,
+    paddingBottom: 20,
   },
   userInfoSection: {
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 16,
     paddingVertical: 32,
     marginBottom: 24,
     shadowColor: '#000',
@@ -225,91 +170,22 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
   },
   avatarOverlay: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#007AFF',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
+    backgroundColor: '#4ECDC4',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#ffffff',
-  },
-  editProfileButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#f0f8ff',
-    borderRadius: 20,
-    alignSelf: 'center',
-  },
-  editProfileText: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 6,
-  },
-  goalsSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 16,
-  },
-  goalsContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  goalItem: {
-    marginBottom: 16,
-  },
-  goalLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  goalButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  goalButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: '#f5f5f5',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  goalButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  goalButtonText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
-  goalButtonTextActive: {
-    color: 'white',
   },
   userName: {
     fontSize: 24,
@@ -323,8 +199,7 @@ const styles = StyleSheet.create({
   },
   menuSection: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    marginBottom: 16,
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -335,84 +210,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 20,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#F0F0F0',
+  },
+  lastMenuItem: {
+    borderBottomWidth: 0,
+  },
+  menuItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   menuItemText: {
     fontSize: 16,
     color: '#1a1a1a',
     fontWeight: '500',
+    marginLeft: 16,
   },
-  menuItemArrow: {
-    fontSize: 20,
-    color: '#cccccc',
-  },
-  submenuSection: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  submenuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  submenuItemText: {
-    fontSize: 14,
-    color: '#666666',
-  },
-  submenuItemArrow: {
-    fontSize: 16,
-    color: '#cccccc',
-  },
-  logoutButton: {
-    backgroundColor: '#ff3b30',
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  logoutButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  bottomTabs: {
-    flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    paddingVertical: 8,
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  activeTab: {
-    backgroundColor: '#f0f8ff',
-  },
-  tabIcon: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  tabLabel: {
-    fontSize: 12,
-    color: '#666666',
-  },
-  activeTabLabel: {
-    color: '#007AFF',
-    fontWeight: '600',
+  logoutText: {
+    color: '#FF3B30',
   },
 });

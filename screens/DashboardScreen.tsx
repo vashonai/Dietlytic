@@ -2,23 +2,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import AIAdviceDemo from '../components/AIAdviceDemo';
 import AICoachBubble from '../components/AICoachBubble';
 import APITestComponent from '../components/APITestComponent';
 import CameraComponent from '../components/CameraComponent';
+import CameraDebugComponent from '../components/CameraDebugComponent';
+import CircularProgress from '../components/CircularProgress';
 import FoodSelection from '../components/FoodSelection';
+import MacroProgressBar from '../components/MacroProgressBar';
 import NutritionDisplay from '../components/NutritionDisplay';
+import SuggestionCard from '../components/SuggestionCard';
 import TestCameraFlow from '../components/TestCameraFlow';
 import { API_KEYS } from '../config/apiKeys';
 import { AICoachAdvice, aiCoachService } from '../services/aiCoachService';
@@ -29,7 +33,7 @@ import { FoodDetection, VisionService } from '../services/visionService';
 
 export default function DashboardScreen() {
   const router = useRouter();
-  
+
   // Camera and nutrition analysis state
   const [showCamera, setShowCamera] = useState(false);
   const [showFoodSelection, setShowFoodSelection] = useState(false);
@@ -41,6 +45,7 @@ export default function DashboardScreen() {
   const [showTestFlow, setShowTestFlow] = useState(false);
   const [showAIDemo, setShowAIDemo] = useState(false);
   const [showAPITest, setShowAPITest] = useState(false);
+  const [showCameraDebug, setShowCameraDebug] = useState(false);
   const [aiAdvice, setAiAdvice] = useState<AICoachAdvice | null>(null);
   const [showAICoach, setShowAICoach] = useState(true);
 
@@ -50,22 +55,25 @@ export default function DashboardScreen() {
 
   // Mock data for demonstration
   const calorieData = {
-    consumed: 1200,
+    consumed: 500,
     target: 2000,
-    remaining: 800,
+    remaining: 1500,
   };
 
-  const nutrientData = [
-    { name: 'Carbs', consumed: 45, target: 50, color: '#FF6B6B' },
-    { name: 'Protein', consumed: 35, target: 30, color: '#4ECDC4' },
-    { name: 'Fats', consumed: 20, target: 20, color: '#45B7D1' },
+  const macroData = [
+    { label: 'Carbs', current: 80, target: 200, unit: 'g', color: '#FF6B6B', icon: '🍞' },
+    { label: 'Protein', current: 80, target: 200, unit: 'g', color: '#4ECDC4', icon: '🥩' },
+    { label: 'Fats', current: 80, target: 200, unit: 'g', color: '#45B7D1', icon: '🥑' },
   ];
 
-  const tips = [
-    'Try these 3 simple low-carb recipes',
-    'Drink more water throughout the day',
-    'Add more vegetables to your meals',
+  const suggestions = [
+    { icon: '🍽', title: 'Try these 3 simple low-carb recipes' },
+    { icon: '🏋', title: 'Here are some simple at-home core workouts!!' },
   ];
+
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const currentDay = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const currentDayIndex = currentDay === 0 ? 6 : currentDay - 1; // Convert to Monday = 0
 
   // Camera and nutrition analysis handlers
   const handleTakePhoto = async (imageUri: string) => {
@@ -73,9 +81,11 @@ export default function DashboardScreen() {
     setIsProcessing(true);
 
     try {
+      console.log('Processing image:', imageUri);
+
       // Step 1: Detect food items using Google Vision API
       const foods = await visionService.detectFood(imageUri);
-      
+
       if (foods.length === 0) {
         Alert.alert('No Food Detected', 'We couldn\'t identify any food items in this image. Please try taking another photo with better lighting.');
         setIsProcessing(false);
@@ -93,7 +103,21 @@ export default function DashboardScreen() {
       }
     } catch (error) {
       console.error('Error processing image:', error);
-      Alert.alert('Error', 'Failed to analyze the image. Please try again.');
+
+      // Provide more specific error messages
+      let errorMessage = 'Failed to analyze the image. Please try again.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('File does not exist')) {
+          errorMessage = 'Image file was not found. Please try taking the photo again.';
+        } else if (error.message.includes('Vision API error')) {
+          errorMessage = 'AI service is temporarily unavailable. Please try again later.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        }
+      }
+
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -107,11 +131,11 @@ export default function DashboardScreen() {
 
   const fetchNutritionData = async (food: FoodDetection) => {
     setIsProcessing(true);
-    
+
     try {
       // Step 2: Get nutrition data using Nutritionix API
       const nutrition = await nutritionService.getNutritionData(food.food);
-      
+
       if (!nutrition) {
         Alert.alert('Nutrition Data Not Found', `We couldn't find nutritional information for "${food.food}". Please try a different food item.`);
         setIsProcessing(false);
@@ -120,7 +144,7 @@ export default function DashboardScreen() {
 
       setNutritionData(nutrition);
       setShowNutrition(true);
-      
+
       // Generate AI coach advice based on the food analysis
       const foodAnalysis = aiCoachService.analyzeFood(nutrition);
       const advice = aiCoachService.generateAdvice(foodAnalysis);
@@ -142,7 +166,7 @@ export default function DashboardScreen() {
         nutritionData,
         undefined // imageUri - could be passed from camera if needed
       );
-      
+
       Alert.alert('Saved!', `Nutrition data for "${selectedFood.food}" has been saved to your history.`);
       handleCloseNutrition();
     } catch (error) {
@@ -184,34 +208,20 @@ export default function DashboardScreen() {
     }
   };
 
-  const renderNutrientBar = (nutrient: any) => (
-    <View key={nutrient.name} style={styles.nutrientItem}>
-      <View style={styles.nutrientHeader}>
-        <Text style={styles.nutrientName}>{nutrient.name}</Text>
-        <Text style={styles.nutrientValue}>
-          {nutrient.consumed}g / {nutrient.target}g
-        </Text>
-      </View>
-      <View style={styles.nutrientBarContainer}>
-        <View
-          style={[
-            styles.nutrientBar,
-            {
-              width: `${(nutrient.consumed / nutrient.target) * 100}%`,
-              backgroundColor: nutrient.color,
-            },
-          ]}
-        />
-      </View>
-    </View>
-  );
+  // Test function with a sample image
+  const handleTestImage = async () => {
+    try {
+      // Use a test image data URL
+      const testImageData = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A';
 
-  const renderTip = (tip: string, index: number) => (
-    <TouchableOpacity key={index} style={styles.tipCard}>
-      <Text style={styles.tipText}>{tip}</Text>
-      <Text style={styles.tipArrow}>›</Text>
-    </TouchableOpacity>
-  );
+      console.log('Testing with sample image...');
+      await handleTakePhoto(testImageData);
+    } catch (error) {
+      console.error('Error with test image:', error);
+      Alert.alert('Error', 'Test image failed. Please try camera or upload.');
+    }
+  };
+
 
   // Render camera, food selection, nutrition display, or test flow if active
   if (showCamera) {
@@ -238,165 +248,138 @@ export default function DashboardScreen() {
     return <APITestComponent />;
   }
 
+  if (showCameraDebug) {
+    return <CameraDebugComponent onClose={() => setShowCameraDebug(false)} />;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <ScrollView style={styles.scrollView}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F8F8" />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>DASHBOARD</Text>
+            <View style={styles.headerLeft}>
+              <Ionicons name="calendar" size={20} color="#4ECDC4" />
+              <Text style={styles.title}>Dashboard</Text>
+            </View>
             <View style={styles.headerRight}>
               <TouchableOpacity
-                style={styles.testButton}
-                onPress={() => setShowTestFlow(true)}
+                style={styles.debugButton}
+                onPress={() => setShowCameraDebug(true)}
               >
-                <Ionicons name="bug" size={16} color="#007AFF" />
-                <Text style={styles.testButtonText}>Test</Text>
+                <Ionicons name="bug" size={16} color="#4ECDC4" />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.demoButton}
-                onPress={() => setShowAIDemo(true)}
-              >
-                <Ionicons name="bulb" size={16} color="#007AFF" />
-                <Text style={styles.demoButtonText}>AI Demo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.aiToggleButton}
-                onPress={toggleAICoach}
-              >
-                <Ionicons name={showAICoach ? "eye-off" : "eye"} size={16} color="#007AFF" />
-                <Text style={styles.aiToggleText}>{showAICoach ? "Hide" : "Show"} AI</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.apiTestButton}
-                onPress={() => setShowAPITest(true)}
-              >
-                <Ionicons name="flask" size={16} color="#007AFF" />
-                <Text style={styles.apiTestText}>API Test</Text>
-              </TouchableOpacity>
-              <View style={styles.calendarContainer}>
-                <Text style={styles.calendarText}>Mon - Sun</Text>
-              </View>
             </View>
           </View>
 
-          {/* Main Camera Feature */}
-          <View style={styles.cameraSection}>
-            <View style={styles.cameraCard}>
-              <View style={styles.cameraIconContainer}>
-                <Ionicons name="camera" size={60} color="#007AFF" />
-              </View>
-              <Text style={styles.cameraTitle}>Scan Your Food</Text>
-              <Text style={styles.cameraSubtitle}>
-                Take a photo of your meal to get instant nutritional analysis powered by AI
-              </Text>
-              <View style={styles.cameraButtonsContainer}>
-                <TouchableOpacity 
-                  style={[styles.cameraButton, isProcessing && styles.cameraButtonDisabled]} 
-                  onPress={() => setShowCamera(true)}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <ActivityIndicator color="white" size="large" />
-                  ) : (
-                    <>
-                      <Ionicons name="camera" size={24} color="white" />
-                      <Text style={styles.cameraButtonText}>Take Photo</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={[styles.uploadButton, isProcessing && styles.uploadButtonDisabled]} 
-                  onPress={handleImageUpload}
-                  disabled={isProcessing}
-                >
-                  <Ionicons name="images" size={20} color="#007AFF" />
-                  <Text style={styles.uploadButtonText}>Upload Image</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-
-          {/* Calorie Counter */}
-          <View style={styles.calorieSection}>
-            <View style={styles.calorieCard}>
-              <Text style={styles.calorieRemaining}>{calorieData.remaining}</Text>
-              <Text style={styles.calorieLabel}>CALS LEFT</Text>
-              <View style={styles.calorieProgress}>
-                <View
+          {/* Day Selector */}
+          <View style={styles.daySelector}>
+            {days.map((day, index) => (
+              <TouchableOpacity
+                key={day}
+                style={[
+                  styles.dayButton,
+                  index === currentDayIndex && styles.activeDayButton,
+                ]}
+              >
+                <Text
                   style={[
-                    styles.calorieProgressBar,
-                    {
-                      width: `${(calorieData.consumed / calorieData.target) * 100}%`,
-                    },
+                    styles.dayText,
+                    index === currentDayIndex && styles.activeDayText,
                   ]}
-                />
+                >
+                  {day}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Main Circular Calorie Tracker */}
+          <View style={styles.calorieSection}>
+            <View style={styles.calorieTracker}>
+              <CircularProgress
+                size={200}
+                strokeWidth={12}
+                progress={calorieData.consumed / calorieData.target}
+                color="#4ECDC4"
+                backgroundColor="#E5E5E5"
+              >
+                <Text style={styles.calorieNumber}>{calorieData.remaining.toLocaleString()}</Text>
+                <Text style={styles.calorieLabel}>CALS LEFT</Text>
+              </CircularProgress>
+
+              {/* Water and Steps Icons */}
+              <View style={styles.sideIcons}>
+                <View style={styles.sideIcon}>
+                  <Ionicons name="water" size={24} color="#4ECDC4" />
+                  <Text style={styles.sideIconText}>Water</Text>
+                </View>
+                <View style={styles.sideIcon}>
+                  <Ionicons name="walk" size={24} color="#4ECDC4" />
+                  <Text style={styles.sideIconText}>Steps</Text>
+                </View>
               </View>
-              <Text style={styles.calorieDetails}>
-                {calorieData.consumed} of {calorieData.target} calories consumed
-              </Text>
             </View>
           </View>
 
-          {/* Nutrient Bars */}
-          <View style={styles.nutrientSection}>
-            <Text style={styles.sectionTitle}>Today's Nutrition</Text>
-            <View style={styles.nutrientContainer}>
-              {nutrientData.map(renderNutrientBar)}
+          {/* Macro Nutrient Bars */}
+          <View style={styles.macroSection}>
+            <Text style={styles.sectionTitle}>Macro Nutrients</Text>
+            <View style={styles.macroContainer}>
+              {macroData.map((macro, index) => (
+                <MacroProgressBar
+                  key={index}
+                  label={macro.label}
+                  current={macro.current}
+                  target={macro.target}
+                  unit={macro.unit}
+                  color={macro.color}
+                  icon={macro.icon}
+                />
+              ))}
             </View>
           </View>
 
-          {/* Tips Section */}
-          <View style={styles.tipsSection}>
-            <Text style={styles.sectionTitle}>Health Tips</Text>
-            <View style={styles.tipsContainer}>
-              {tips.map(renderTip)}
+          {/* Notes Section */}
+          <View style={styles.notesSection}>
+            <View style={styles.notesHeader}>
+              <Ionicons name="document-text" size={16} color="#666666" />
+              <Text style={styles.notesTitle}>Notes</Text>
             </View>
+            <TouchableOpacity style={styles.notesButton}>
+              <Text style={styles.notesPlaceholder}>Add your daily notes...</Text>
+              <Ionicons name="add" size={20} color="#4ECDC4" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Suggestions Section */}
+          <View style={styles.suggestionsSection}>
+            <Text style={styles.sectionTitle}>Suggestions</Text>
+            {suggestions.map((suggestion, index) => (
+              <SuggestionCard
+                key={index}
+                icon={suggestion.icon}
+                title={suggestion.title}
+                onPress={() => console.log('Suggestion pressed:', suggestion.title)}
+              />
+            ))}
           </View>
         </View>
       </ScrollView>
 
-      {/* Floating Action Button */}
+      {/* Floating Camera Button */}
       <TouchableOpacity
-        style={styles.fab}
+        style={styles.floatingCameraButton}
         onPress={() => setShowCamera(true)}
         disabled={isProcessing}
       >
         {isProcessing ? (
-          <ActivityIndicator color="white" size="large" />
+          <ActivityIndicator color="#FFFFFF" size="small" />
         ) : (
-          <Ionicons name="camera" size={28} color="white" />
+          <Ionicons name="camera" size={24} color="#FFFFFF" />
         )}
       </TouchableOpacity>
-
-      {/* Bottom Tab Navigation */}
-      <View style={styles.bottomTabs}>
-        <TouchableOpacity
-          style={[styles.tabItem, styles.activeTab]}
-          onPress={() => router.push('/(tabs)')}
-        >
-          <Text style={styles.tabIcon}>📊</Text>
-          <Text style={[styles.tabLabel, styles.activeTabLabel]}>Dashboard</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => router.push('/(tabs)/food-history')}
-        >
-          <Text style={styles.tabIcon}>📝</Text>
-          <Text style={styles.tabLabel}>History</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => router.push('/(tabs)/profile')}
-        >
-          <Text style={styles.tabIcon}>👤</Text>
-          <Text style={styles.tabLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
 
       {/* AI Coach Bubble */}
       {showAICoach && <AICoachBubble onAdviceGenerated={handleAIAdviceGenerated} />}
@@ -407,7 +390,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F8F8F8',
   },
   scrollView: {
     flex: 1,
@@ -415,239 +398,124 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingTop: 20,
+    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  testButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#f0f8ff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  testButtonText: {
-    color: '#007AFF',
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  demoButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#f0f8ff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  demoButtonText: {
-    color: '#007AFF',
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  aiToggleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#f0f8ff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  aiToggleText: {
-    color: '#007AFF',
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  apiTestButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#f0f8ff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  apiTestText: {
-    color: '#007AFF',
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#1a1a1a',
+    marginLeft: 8,
   },
-  calendarContainer: {
+  debugButton: {
+    padding: 8,
+    borderRadius: 20,
     backgroundColor: '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  calendarText: {
-    fontSize: 12,
-    color: '#666666',
-    fontWeight: '500',
-  },
-  cameraSection: {
-    marginBottom: 24,
-  },
-  cameraCard: {
+  daySelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 30,
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
+    borderRadius: 12,
+    padding: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  cameraIconContainer: {
-    marginBottom: 16,
-  },
-  cameraTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  cameraSubtitle: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  cameraButton: {
-    backgroundColor: '#007AFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 25,
-    shadowColor: '#007AFF',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  cameraButtonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  cameraButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  cameraButtonsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    width: '100%',
-  },
-  uploadButton: {
-    backgroundColor: '#ffffff',
-    borderWidth: 2,
-    borderColor: '#007AFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 25,
+  dayButton: {
     flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
   },
-  uploadButtonDisabled: {
-    backgroundColor: '#f0f0f0',
-    borderColor: '#ccc',
+  activeDayButton: {
+    backgroundColor: '#4ECDC4',
   },
-  uploadButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
+  dayText: {
+    fontSize: 14,
     fontWeight: '600',
-    marginLeft: 8,
+    color: '#666666',
+  },
+  activeDayText: {
+    color: '#ffffff',
   },
   calorieSection: {
-    marginBottom: 24,
-  },
-  calorieCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    marginBottom: 30,
   },
-  calorieRemaining: {
-    fontSize: 48,
+  calorieTracker: {
+    alignItems: 'center',
+    position: 'relative',
+  },
+  calorieNumber: {
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#007AFF',
-    marginBottom: 8,
+    color: '#1a1a1a',
+    marginBottom: 4,
   },
   calorieLabel: {
-    fontSize: 16,
-    color: '#666666',
-    marginBottom: 16,
-    fontWeight: '500',
-  },
-  calorieProgress: {
-    width: '100%',
-    height: 8,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 4,
-    marginBottom: 12,
-  },
-  calorieProgressBar: {
-    height: '100%',
-    backgroundColor: '#007AFF',
-    borderRadius: 4,
-  },
-  calorieDetails: {
     fontSize: 14,
     color: '#666666',
+    fontWeight: '600',
   },
-  nutrientSection: {
-    marginBottom: 24,
+  sideIcons: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  sideIcon: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sideIconText: {
+    fontSize: 12,
+    color: '#4ECDC4',
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  macroSection: {
+    marginBottom: 30,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: '#1a1a1a',
     marginBottom: 16,
   },
-  nutrientContainer: {
+  macroContainer: {
     backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 20,
@@ -657,107 +525,52 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  nutrientItem: {
-    marginBottom: 16,
+  notesSection: {
+    marginBottom: 30,
   },
-  nutrientHeader: {
+  notesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  notesTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginLeft: 8,
+  },
+  notesButton: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  nutrientName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1a1a1a',
-  },
-  nutrientValue: {
-    fontSize: 14,
-    color: '#666666',
-  },
-  nutrientBarContainer: {
-    width: '100%',
-    height: 6,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 3,
-  },
-  nutrientBar: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  tipsSection: {
-    marginBottom: 20,
-  },
-  tipsContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  tipCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  tipText: {
-    flex: 1,
+  notesPlaceholder: {
     fontSize: 16,
-    color: '#1a1a1a',
-    marginRight: 12,
+    color: '#999999',
   },
-  tipArrow: {
-    fontSize: 20,
-    color: '#cccccc',
+  suggestionsSection: {
+    marginBottom: 20,
   },
-  bottomTabs: {
-    flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    paddingVertical: 8,
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  activeTab: {
-    backgroundColor: '#f0f8ff',
-  },
-  tabIcon: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  tabLabel: {
-    fontSize: 12,
-    color: '#666666',
-  },
-  activeTabLabel: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  fab: {
+  floatingCameraButton: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 30,
     right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#007AFF',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#4ECDC4',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,

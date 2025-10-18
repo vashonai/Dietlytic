@@ -1,27 +1,61 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { authService } from '../services/authService';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    // TODO: Implement login logic
-    console.log('Login pressed', { email, password, rememberMe });
+  // Check if user is already authenticated
+  useEffect(() => {
+    if (authService.isLoggedIn()) {
+      router.replace('/(tabs)');
+    }
+  }, []);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const result = await authService.login(email, password);
+
+      if (result.success) {
+        // Navigate to main app
+        router.replace('/(tabs)');
+      } else {
+        Alert.alert('Login Failed', result.error || 'Invalid credentials');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleQuickLogin = (testEmail: string, testPassword: string) => {
+    setEmail(testEmail);
+    setPassword(testPassword);
   };
 
   const handleGoogleLogin = () => {
@@ -36,7 +70,11 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#ffffff"
+        translucent={false}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
@@ -82,8 +120,14 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                <Text style={styles.loginButtonText}>Login</Text>
+              <TouchableOpacity
+                style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+                onPress={handleLogin}
+                disabled={isLoading}
+              >
+                <Text style={styles.loginButtonText}>
+                  {isLoading ? 'Logging in...' : 'Login'}
+                </Text>
               </TouchableOpacity>
 
               <View style={styles.divider}>
@@ -98,6 +142,33 @@ export default function LoginScreen() {
 
               <TouchableOpacity style={styles.appleButton} onPress={handleAppleLogin}>
                 <Text style={styles.appleButtonText}>Sign in with Apple</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Test Accounts Section */}
+            <View style={styles.testAccountsSection}>
+              <Text style={styles.testAccountsTitle}>🧪 Test Accounts</Text>
+              <Text style={styles.testAccountsSubtitle}>Quick login for testing:</Text>
+
+              <TouchableOpacity
+                style={styles.testAccountButton}
+                onPress={() => handleQuickLogin('test@dietlytic.com', 'password123')}
+              >
+                <Text style={styles.testAccountButtonText}>Test User (test@dietlytic.com)</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.testAccountButton}
+                onPress={() => handleQuickLogin('demo@dietlytic.com', 'demo123')}
+              >
+                <Text style={styles.testAccountButtonText}>Demo User (demo@dietlytic.com)</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.testAccountButton}
+                onPress={() => handleQuickLogin('admin@dietlytic.com', 'admin123')}
+              >
+                <Text style={styles.testAccountButtonText}>Admin User (admin@dietlytic.com)</Text>
               </TouchableOpacity>
             </View>
 
@@ -200,6 +271,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  loginButtonDisabled: {
+    backgroundColor: '#cccccc',
+    opacity: 0.6,
+  },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -247,5 +322,40 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 14,
     textDecorationLine: 'underline',
+  },
+  testAccountsSection: {
+    marginTop: 32,
+    marginBottom: 24,
+    padding: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  testAccountsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  testAccountsSubtitle: {
+    fontSize: 12,
+    color: '#666666',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  testAccountButton: {
+    backgroundColor: '#28a745',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginBottom: 8,
+    alignItems: 'center',
+  },
+  testAccountButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

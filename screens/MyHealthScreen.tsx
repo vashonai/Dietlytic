@@ -1,199 +1,201 @@
-// My Health Screen
-import Slider from '@react-native-community/slider';
+import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import { ArrowLeft } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
-import { useRouter } from 'expo-router';
+import CircularProgress from '../components/CircularProgress';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function MyHealthScreen() {
   const router = useRouter();
-  
-  // State for user info
-  const [userInfo, setUserInfo] = useState({
-    name: 'John Doe',
-    age: '28',
-    gender: 'Male',
-  });
+  const { user } = useAuth();
 
-  // State for health stats
-  const [healthStats, setHealthStats] = useState({
-    weight: '--',
-    bloodPressure: '--',
-    bpm: '--',
-  });
+  // State for health data
+  const [weight, setWeight] = useState('70');
+  const [bloodPressure, setBloodPressure] = useState('120/80');
+  const [bpm, setBpm] = useState('72');
+  const [height, setHeight] = useState('175');
+  const [bodyMeasurement, setBodyMeasurement] = useState('');
+  const [healthConditions, setHealthConditions] = useState('None');
+  const [medications, setMedications] = useState('None');
 
-  // State for sliders
-  const [height, setHeight] = useState(170);
-  const [bodyMeasurement, setBodyMeasurement] = useState(75);
+  const handleBack = () => {
+    router.back();
+  };
 
-  // State for dropdowns
-  const [healthConditions, setHealthConditions] = useState('');
-  const [medications, setMedications] = useState('');
-
-  // Health conditions options
-  const healthConditionsOptions = [
-    { label: 'Select condition...', value: '' },
-    { label: 'Diabetes', value: 'diabetes' },
-    { label: 'Hypertension', value: 'hypertension' },
-    { label: 'Heart Disease', value: 'heart_disease' },
-    { label: 'High Cholesterol', value: 'high_cholesterol' },
-    { label: 'Asthma', value: 'asthma' },
-    { label: 'Arthritis', value: 'arthritis' },
-    { label: 'None', value: 'none' },
-  ];
-
-  // Medications options
-  const medicationsOptions = [
-    { label: 'Select medication...', value: '' },
-    { label: 'Metformin', value: 'metformin' },
-    { label: 'Lisinopril', value: 'lisinopril' },
-    { label: 'Atorvastatin', value: 'atorvastatin' },
-    { label: 'Aspirin', value: 'aspirin' },
-    { label: 'Insulin', value: 'insulin' },
-    { label: 'None', value: 'none' },
-  ];
+  const handleStatPress = (statType: string) => {
+    Alert.alert(`${statType}`, `View detailed ${statType.toLowerCase()} history`);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F8F8" />
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={24} color="#333" />
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#4ECDC4" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Health</Text>
-        <View style={styles.headerSpacer} />
+        <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          
-          {/* User Info Card */}
-          <View style={styles.userInfoCard}>
-            <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {userInfo.name.split(' ').map(n => n[0]).join('')}
-                </Text>
+          {/* Profile Section */}
+          <View style={styles.profileSection}>
+            <Text style={styles.sectionTitle}>Profile</Text>
+            <View style={styles.profileCard}>
+              <View style={styles.profileRow}>
+                <Text style={styles.profileLabel}>Name:</Text>
+                <Text style={styles.profileValue}>{user?.name || 'User'}</Text>
               </View>
-            </View>
-            <View style={styles.userDetails}>
-              <Text style={styles.userName}>{userInfo.name}</Text>
-              <View style={styles.userStats}>
-                <Text style={styles.userStatText}>Age: {userInfo.age}</Text>
-                <Text style={styles.userStatText}>Gender: {userInfo.gender}</Text>
+              <View style={styles.profileRow}>
+                <Text style={styles.profileLabel}>Age:</Text>
+                <Text style={styles.profileValue}>{user?.age || '25'} years</Text>
+              </View>
+              <View style={styles.profileRow}>
+                <Text style={styles.profileLabel}>Gender:</Text>
+                <Text style={styles.profileValue}>Male</Text>
               </View>
             </View>
           </View>
 
-          {/* Stats Row */}
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Weight</Text>
-              <Text style={styles.statValue}>{healthStats.weight}</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Blood Pressure</Text>
-              <Text style={styles.statValue}>{healthStats.bloodPressure}</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>BPM</Text>
-              <Text style={styles.statValue}>{healthStats.bpm}</Text>
+          {/* Stats Section */}
+          <View style={styles.statsSection}>
+            <Text style={styles.sectionTitle}>Health Stats</Text>
+            <View style={styles.statsContainer}>
+              {/* Weight */}
+              <TouchableOpacity
+                style={styles.statButton}
+                onPress={() => handleStatPress('Weight')}
+              >
+                <CircularProgress
+                  size={80}
+                  strokeWidth={6}
+                  progress={0.7}
+                  color="#4ECDC4"
+                  backgroundColor="#E5E5E5"
+                >
+                  <Text style={styles.statValue}>{weight}</Text>
+                  <Text style={styles.statUnit}>kg</Text>
+                </CircularProgress>
+                <Text style={styles.statLabel}>Weight</Text>
+              </TouchableOpacity>
+
+              {/* Blood Pressure */}
+              <TouchableOpacity
+                style={styles.statButton}
+                onPress={() => handleStatPress('Blood Pressure')}
+              >
+                <CircularProgress
+                  size={80}
+                  strokeWidth={6}
+                  progress={0.6}
+                  color="#FF6B6B"
+                  backgroundColor="#E5E5E5"
+                >
+                  <Text style={styles.statValue}>{bloodPressure}</Text>
+                  <Text style={styles.statUnit}>mmHg</Text>
+                </CircularProgress>
+                <Text style={styles.statLabel}>Blood Pressure</Text>
+              </TouchableOpacity>
+
+              {/* BPM */}
+              <TouchableOpacity
+                style={styles.statButton}
+                onPress={() => handleStatPress('BPM')}
+              >
+                <CircularProgress
+                  size={80}
+                  strokeWidth={6}
+                  progress={0.8}
+                  color="#45B7D1"
+                  backgroundColor="#E5E5E5"
+                >
+                  <Text style={styles.statValue}>{bpm}</Text>
+                  <Text style={styles.statUnit}>BPM</Text>
+                </CircularProgress>
+                <Text style={styles.statLabel}>BPM</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Sliders Section */}
-          <View style={styles.slidersSection}>
+          {/* Measurements Section */}
+          <View style={styles.measurementsSection}>
             <Text style={styles.sectionTitle}>Body Measurements</Text>
-            
-            {/* Height Slider */}
-            <View style={styles.sliderContainer}>
-              <Text style={styles.sliderLabel}>Height: {height} cm</Text>
-              <Slider
-                style={styles.slider}
-                minimumValue={100}
-                maximumValue={220}
-                value={height}
-                onValueChange={setHeight}
-                minimumTrackTintColor="#007AFF"
-                maximumTrackTintColor="#E5E5EA"
-                thumbStyle={styles.sliderThumb}
-                trackStyle={styles.sliderTrack}
-              />
-            </View>
+            <View style={styles.measurementsCard}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Height (cm)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={height}
+                  onChangeText={setHeight}
+                  placeholder="Enter height"
+                  keyboardType="numeric"
+                />
+              </View>
 
-            {/* Body Measurement Slider */}
-            <View style={styles.sliderContainer}>
-              <Text style={styles.sliderLabel}>Body Measurement: {bodyMeasurement} cm</Text>
-              <Slider
-                style={styles.slider}
-                minimumValue={50}
-                maximumValue={150}
-                value={bodyMeasurement}
-                onValueChange={setBodyMeasurement}
-                minimumTrackTintColor="#007AFF"
-                maximumTrackTintColor="#E5E5EA"
-                thumbStyle={styles.sliderThumb}
-                trackStyle={styles.sliderTrack}
-              />
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Body Measurement</Text>
+                <TextInput
+                  style={styles.input}
+                  value={bodyMeasurement}
+                  onChangeText={setBodyMeasurement}
+                  placeholder="Enter measurements"
+                  multiline
+                />
+              </View>
             </View>
           </View>
 
-          {/* Dropdown Section */}
-          <View style={styles.dropdownSection}>
+          {/* Health Info Section */}
+          <View style={styles.healthInfoSection}>
             <Text style={styles.sectionTitle}>Health Information</Text>
-            
-            {/* Health Conditions Dropdown */}
-            <View style={styles.dropdownContainer}>
-              <Text style={styles.dropdownLabel}>Health Conditions</Text>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={healthConditions}
-                  onValueChange={setHealthConditions}
-                  style={styles.picker}
-                >
-                  {healthConditionsOptions.map((option) => (
-                    <Picker.Item
-                      key={option.value}
-                      label={option.label}
-                      value={option.value}
-                    />
-                  ))}
-                </Picker>
+            <View style={styles.healthInfoCard}>
+              <View style={styles.pickerGroup}>
+                <Text style={styles.pickerLabel}>Health Conditions</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={healthConditions}
+                    onValueChange={setHealthConditions}
+                    style={styles.picker}
+                  >
+                    <Picker.Item label="None" value="None" />
+                    <Picker.Item label="Diabetes" value="Diabetes" />
+                    <Picker.Item label="Hypertension" value="Hypertension" />
+                    <Picker.Item label="Heart Disease" value="Heart Disease" />
+                    <Picker.Item label="Other" value="Other" />
+                  </Picker>
+                </View>
               </View>
-            </View>
 
-            {/* Medications Dropdown */}
-            <View style={styles.dropdownContainer}>
-              <Text style={styles.dropdownLabel}>Medications</Text>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={medications}
-                  onValueChange={setMedications}
-                  style={styles.picker}
-                >
-                  {medicationsOptions.map((option) => (
-                    <Picker.Item
-                      key={option.value}
-                      label={option.label}
-                      value={option.value}
-                    />
-                  ))}
-                </Picker>
+              <View style={styles.pickerGroup}>
+                <Text style={styles.pickerLabel}>Medications</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={medications}
+                    onValueChange={setMedications}
+                    style={styles.picker}
+                  >
+                    <Picker.Item label="None" value="None" />
+                    <Picker.Item label="Blood Pressure Meds" value="Blood Pressure Meds" />
+                    <Picker.Item label="Diabetes Meds" value="Diabetes Meds" />
+                    <Picker.Item label="Supplements" value="Supplements" />
+                    <Picker.Item label="Other" value="Other" />
+                  </Picker>
+                </View>
               </View>
             </View>
           </View>
@@ -206,166 +208,170 @@ export default function MyHealthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F8F8F8',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e1e5e9',
+    borderBottomColor: '#E5E5E5',
   },
   backButton: {
     padding: 8,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#1a1a1a',
-    fontFamily: 'serif',
-    textAlign: 'center',
   },
-  headerSpacer: {
+  placeholder: {
     width: 40,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
-  
-  // User Info Card
-  userInfoCard: {
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 16,
+  },
+  profileSection: {
+    marginBottom: 24,
+  },
+  profileCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 20,
+    borderRadius: 12,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  avatarContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  userDetails: {
-    alignItems: 'center',
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 8,
-  },
-  userStats: {
+  profileRow: {
     flexDirection: 'row',
-    gap: 16,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
-  userStatText: {
+  profileLabel: {
     fontSize: 16,
     color: '#666666',
+    fontWeight: '500',
   },
-
-  // Stats Row
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
+  profileValue: {
+    fontSize: 16,
+    color: '#1a1a1a',
+    fontWeight: '600',
+  },
+  statsSection: {
     marginBottom: 24,
   },
-  statCard: {
-    flex: 1,
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     backgroundColor: '#ffffff',
     borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  statLabel: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 4,
+  statButton: {
+    alignItems: 'center',
+    flex: 1,
   },
   statValue: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#1a1a1a',
+    marginBottom: 2,
   },
-
-  // Sliders Section
-  slidersSection: {
+  statUnit: {
+    fontSize: 10,
+    color: '#666666',
+    fontWeight: '500',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666666',
+    fontWeight: '500',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  measurementsSection: {
     marginBottom: 24,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
+  measurementsCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  inputGroup: {
     marginBottom: 16,
   },
-  sliderContainer: {
-    marginBottom: 20,
-  },
-  sliderLabel: {
+  inputLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333333',
+    color: '#1a1a1a',
+    fontWeight: '500',
     marginBottom: 8,
   },
-  slider: {
-    width: '100%',
-    height: 40,
+  input: {
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: '#ffffff',
+    color: '#1a1a1a',
   },
-  sliderThumb: {
-    backgroundColor: '#007AFF',
-    width: 20,
-    height: 20,
-  },
-  sliderTrack: {
-    height: 4,
-    borderRadius: 2,
-  },
-
-  // Dropdown Section
-  dropdownSection: {
-    marginBottom: 24,
-  },
-  dropdownContainer: {
+  healthInfoSection: {
     marginBottom: 20,
   },
-  dropdownLabel: {
+  healthInfoCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  pickerGroup: {
+    marginBottom: 16,
+  },
+  pickerLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333333',
+    color: '#1a1a1a',
+    fontWeight: '500',
     marginBottom: 8,
   },
   pickerContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e1e5e9',
-    overflow: 'hidden',
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
   },
   picker: {
     height: 50,

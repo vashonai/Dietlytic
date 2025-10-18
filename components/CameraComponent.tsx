@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
+import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
+import React, { useRef, useState } from 'react';
+import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
@@ -44,11 +44,22 @@ export default function CameraComponent({ onPhotoTaken, onClose }: CameraCompone
         setIsCapturing(true);
         const photo = await cameraRef.current.takePictureAsync({
           quality: 0.8,
-          base64: false,
+          base64: true, // Get base64 directly for Android compatibility
         });
-        
+
         if (photo?.uri) {
-          onPhotoTaken(photo.uri);
+          console.log('Photo taken, URI:', photo.uri);
+
+          if (photo.base64) {
+            // Use base64 data URL for Android compatibility
+            const dataUrl = `data:image/jpeg;base64,${photo.base64}`;
+            console.log('Using base64 data URL for Android compatibility');
+            onPhotoTaken(dataUrl);
+          } else {
+            // Fallback to URI
+            console.log('No base64 data, using URI fallback');
+            onPhotoTaken(photo.uri);
+          }
         }
       } catch (error) {
         Alert.alert('Error', 'Failed to take picture. Please try again.');
@@ -59,6 +70,46 @@ export default function CameraComponent({ onPhotoTaken, onClose }: CameraCompone
     }
   }
 
+  // Helper function to copy image to permanent location
+  async function copyImageToPermanentLocation(tempUri: string): Promise<string> {
+    try {
+      const FileSystem = require('expo-file-system');
+      const fileName = `food_${Date.now()}.jpg`;
+      const permanentPath = `${FileSystem.documentDirectory}${fileName}`;
+
+      console.log('Copying image from:', tempUri);
+      console.log('Copying image to:', permanentPath);
+
+      // First check if source file exists
+      const sourceInfo = await FileSystem.getInfoAsync(tempUri);
+      if (!sourceInfo.exists) {
+        console.error('Source file does not exist:', tempUri);
+        throw new Error('Source file does not exist');
+      }
+
+      console.log('Source file exists, proceeding with copy...');
+
+      await FileSystem.copyAsync({
+        from: tempUri,
+        to: permanentPath,
+      });
+
+      // Verify the copy was successful
+      const destInfo = await FileSystem.getInfoAsync(permanentPath);
+      if (!destInfo.exists) {
+        throw new Error('Copy operation failed - destination file does not exist');
+      }
+
+      console.log('Image successfully copied to permanent location:', permanentPath);
+      return permanentPath;
+    } catch (error) {
+      console.error('Error copying image:', error);
+      console.log('Falling back to original URI:', tempUri);
+      // Return original URI if copy fails
+      return tempUri;
+    }
+  }
+
   return (
     <ThemedView style={styles.container}>
       <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
@@ -66,10 +117,10 @@ export default function CameraComponent({ onPhotoTaken, onClose }: CameraCompone
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Ionicons name="close" size={30} color="white" />
           </TouchableOpacity>
-          
+
           <View style={styles.captureContainer}>
-            <TouchableOpacity 
-              style={[styles.captureButton, isCapturing && styles.capturingButton]} 
+            <TouchableOpacity
+              style={[styles.captureButton, isCapturing && styles.capturingButton]}
               onPress={takePicture}
               disabled={isCapturing}
             >
@@ -80,7 +131,7 @@ export default function CameraComponent({ onPhotoTaken, onClose }: CameraCompone
               )}
             </TouchableOpacity>
           </View>
-          
+
           <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
             <Ionicons name="camera-reverse" size={30} color="white" />
           </TouchableOpacity>

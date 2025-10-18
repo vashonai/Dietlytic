@@ -1,20 +1,30 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
-    SafeAreaView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Platform,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function WelcomeScreen() {
   const router = useRouter();
 
+  useEffect(() => {
+    console.log('WelcomeScreen - Platform:', Platform.OS);
+    console.log('WelcomeScreen - Component mounted');
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#ffffff"
+        translucent={false}
+      />
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Welcome To Dielytic</Text>

@@ -2,13 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function FoodHistoryScreen() {
@@ -79,7 +79,7 @@ export default function FoodHistoryScreen() {
           ) : (
             <View style={styles.foodList}>
               {foodEntries.map(renderFoodEntry)}
-              
+
               <TouchableOpacity
                 style={styles.addMoreButton}
                 onPress={() => {
@@ -95,32 +95,6 @@ export default function FoodHistoryScreen() {
         </View>
       </ScrollView>
 
-      {/* Bottom Tab Navigation */}
-      <View style={styles.bottomTabs}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => router.push('/(tabs)')}
-        >
-          <Text style={styles.tabIcon}>📊</Text>
-          <Text style={styles.tabLabel}>Dashboard</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabItem, styles.activeTab]}
-          onPress={() => router.push('/(tabs)/food-history')}
-        >
-          <Text style={styles.tabIcon}>📝</Text>
-          <Text style={[styles.tabLabel, styles.activeTabLabel]}>History</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => router.push('/(tabs)/profile')}
-        >
-          <Text style={styles.tabIcon}>👤</Text>
-          <Text style={styles.tabLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -236,32 +210,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
-  },
-  bottomTabs: {
-    flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    paddingVertical: 8,
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  activeTab: {
-    backgroundColor: '#f0f8ff',
-  },
-  tabIcon: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  tabLabel: {
-    fontSize: 12,
-    color: '#666666',
-  },
-  activeTabLabel: {
-    color: '#007AFF',
-    fontWeight: '600',
   },
 });
