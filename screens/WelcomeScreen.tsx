@@ -1,14 +1,15 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import {
-  Platform,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Platform,
+    SafeAreaView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
+import NutriHelpLogo from '../components/NutriHelpLogo';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function WelcomeScreen() {
       />
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome To Dielytic</Text>
+          <NutriHelpLogo size={140} showText={true} />
           <Text style={styles.subtitle}>Your personal health AI coach</Text>
         </View>
 
@@ -66,18 +67,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 80,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
   subtitle: {
     fontSize: 16,
     color: '#666666',
     textAlign: 'center',
     lineHeight: 24,
+    marginTop: 16,
   },
   buttonContainer: {
     width: '100%',

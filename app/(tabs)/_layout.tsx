@@ -51,7 +51,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="food-history"
         options={{
-          title: 'My Food History',
+          title: 'History',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="time" size={size || 24} color={color} />
           ),

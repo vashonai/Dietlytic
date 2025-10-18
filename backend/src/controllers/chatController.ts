@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { backendAICoachAgentService, MealInput } from '../services/aiCoachAgentService';
 import { openaiService } from '../services/openaiService';
 import { ChatRequest, ChatResponse, MotivationResponse, QuickTipResponse } from '../types/chat';
 
@@ -120,6 +121,95 @@ export class ChatController {
         success: false,
         error: 'Internal server error'
       } as MotivationResponse);
+    }
+  }
+
+  /**
+   * Process AI Coach Agent input (voice or text)
+   */
+  async processAICoachInput(req: Request, res: Response): Promise<void> {
+    try {
+      const { type, content, userId, userContext, conversationHistory = [] } = req.body;
+
+      // Validate input
+      if (!content || typeof content !== 'string' || content.trim().length === 0) {
+        res.status(400).json({
+          success: false,
+          error: 'Content is required and must be a non-empty string'
+        });
+        return;
+      }
+
+      if (!type || !['voice', 'text'].includes(type)) {
+        res.status(400).json({
+          success: false,
+          error: 'Type must be either "voice" or "text"'
+        });
+        return;
+      }
+
+      if (!userId) {
+        res.status(400).json({
+          success: false,
+          error: 'User ID is required'
+        });
+        return;
+      }
+
+      // Create meal input object
+      const mealInput: MealInput = {
+        type,
+        content: content.trim(),
+        timestamp: new Date(),
+        userId
+      };
+
+      // Process input with AI Coach Agent
+      const result = await backendAICoachAgentService.processUserInput(
+        mealInput,
+        userContext,
+        conversationHistory
+      );
+
+      res.status(200).json(result);
+
+    } catch (error) {
+      console.error('AI Coach Agent controller error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  }
+
+  /**
+   * Analyze meal content
+   */
+  async analyzeMealContent(req: Request, res: Response): Promise<void> {
+    try {
+      const { content } = req.body;
+
+      if (!content || typeof content !== 'string' || content.trim().length === 0) {
+        res.status(400).json({
+          success: false,
+          error: 'Content is required and must be a non-empty string'
+        });
+        return;
+      }
+
+      const analysis = await backendAICoachAgentService.analyzeMealContent(content);
+
+      res.status(200).json({
+        success: true,
+        analysis
+      });
+
+    } catch (error) {
+      console.error('Meal analysis controller error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
     }
   }
 

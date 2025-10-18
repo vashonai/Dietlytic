@@ -1,4 +1,4 @@
-# Dietlytic - AI Nutrition Assistant
+# NutriHelp - AI Nutrition Assistant
 
 A React Native app that uses AI to analyze food photos and provide detailed nutritional information.
 
@@ -24,7 +24,7 @@ A React Native app that uses AI to analyze food photos and provide detailed nutr
 ### 1. Install Dependencies
 
 ```bash
-cd Dietlytic
+cd NutriHelp
 npm install
 ```
 
@@ -71,7 +71,7 @@ npm run web
 ## App Structure
 
 ```
-Dietlytic/
+NutriHelp/
 ├── app/
 │   ├── (tabs)/
 │   │   ├── index.tsx          # Main camera screen

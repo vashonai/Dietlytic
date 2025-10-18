@@ -2,15 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 import AIAdviceDemo from '../components/AIAdviceDemo';
@@ -189,6 +189,18 @@ export default function DashboardScreen() {
 
   const handleAIAdviceGenerated = (advice: AICoachAdvice) => {
     setAiAdvice(advice);
+  };
+
+  const handleMealLogged = () => {
+    // Refresh dashboard data when meal is logged via AI Coach
+    console.log('Meal logged via AI Coach - refreshing dashboard');
+    // You can add logic here to refresh the calorie data or other dashboard metrics
+  };
+
+  const handleGoalUpdated = () => {
+    // Refresh dashboard data when goals are updated via AI Coach
+    console.log('Goals updated via AI Coach - refreshing dashboard');
+    // You can add logic here to refresh goal-related data
   };
 
   const toggleAICoach = () => {
@@ -382,7 +394,7 @@ export default function DashboardScreen() {
       </TouchableOpacity>
 
       {/* AI Coach Bubble */}
-      {showAICoach && <AICoachBubble onAdviceGenerated={handleAIAdviceGenerated} />}
+      {showAICoach && <AICoachBubble onMealLogged={handleMealLogged} onGoalUpdated={handleGoalUpdated} />}
     </SafeAreaView>
   );
 }

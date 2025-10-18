@@ -16,4 +16,10 @@ router.get('/motivation', chatController.getMotivation.bind(chatController));
 // POST /api/chat/clear - Clear conversation history
 router.post('/clear', chatController.clearConversation.bind(chatController));
 
+// POST /api/chat/ai-coach - Process AI Coach Agent input (voice or text)
+router.post('/ai-coach', validateRequest, chatController.processAICoachInput.bind(chatController));
+
+// POST /api/chat/analyze-meal - Analyze meal content
+router.post('/analyze-meal', validateRequest, chatController.analyzeMealContent.bind(chatController));
+
 export default router;

@@ -3,7 +3,7 @@
 ## 1. Install Dependencies
 
 ```bash
-cd Dietlytic
+cd NutriHelp
 npm install
 ```
 

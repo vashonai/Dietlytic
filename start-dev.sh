@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Starting Dietlytic Development Environment..."
+echo "Starting NutriHelp Development Environment..."
 echo
 
 echo "Starting Backend Server..."

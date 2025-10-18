@@ -1,30 +1,32 @@
-import dotenv from 'dotenv';
-
-// Load environment variables from .env file
-dotenv.config();
+// React Native compatible configuration
+// Note: Environment variables should be configured in your app's build process
+// For development, you can use Expo's environment variables or hardcode values
 
 export const config = {
+  api: {
+    baseUrl: __DEV__ ? 'http://localhost:3001/api' : 'https://your-production-api.com/api',
+  },
   openai: {
-    apiKey: process.env.OPENAI_API_KEY || '',
-    model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
-    maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '1000'),
-    temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7'),
+    // OpenAI configuration is now handled by the backend
+    apiKey: '', // Not needed on frontend
+    model: 'gpt-4',
+    maxTokens: 1500,
+    temperature: 0.7,
   },
   app: {
-    name: process.env.APP_NAME || 'Dietlytic',
-    version: process.env.APP_VERSION || '1.0.0',
+    name: 'NutriHelp',
+    version: '1.0.0',
   },
 };
 
-// Validate required environment variables
+// Validate configuration
 export const validateEnvironment = () => {
-  const requiredVars = ['OPENAI_API_KEY'];
-  const missingVars = requiredVars.filter(varName => !process.env[varName]);
-  
-  if (missingVars.length > 0) {
-    console.warn(`Missing required environment variables: ${missingVars.join(', ')}`);
-    console.warn('Please check your .env file and ensure all required variables are set.');
+  // Check if API base URL is configured
+  if (!config.api.baseUrl) {
+    console.warn('API base URL is not configured. Please update config/environment.ts');
+    return false;
   }
   
-  return missingVars.length === 0;
+  console.log('Configuration validated successfully');
+  return true;
 };

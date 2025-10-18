@@ -56,7 +56,7 @@ export interface NutritionEntry {
 }
 
 class SupabaseService {
-  private supabase;
+  public supabase;
   private currentUserId: string | null = null;
 
   constructor() {
@@ -110,7 +110,7 @@ class SupabaseService {
       const userRecord: Omit<User, 'created_at' | 'updated_at'> = {
         id: this.currentUserId!,
         email: 'user@dietlytic.com',
-        name: 'Dietlytic User',
+        name: 'NutriHelp User',
         age: 25,
         weight: 70,
         height: 175,

@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Dietlytic",
-    "slug": "Dietlytic",
+    "name": "NutriHelp",
+    "slug": "NutriHelp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "dietlytic",
+    "scheme": "nutrihelp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dietlytic.app",
+      "bundleIdentifier": "com.nutrihelp.app",
       "infoPlist": {
         "NSCameraUsageDescription": "This app needs access to camera to take photos of food for nutritional analysis.",
         "UIStatusBarStyle": "UIStatusBarStyleDarkContent",

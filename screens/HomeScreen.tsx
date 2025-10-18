@@ -60,7 +60,7 @@ export default function HomeScreen() {
                     <View style={styles.header}>
                         <View>
                             <Text style={styles.greeting}>Good morning!</Text>
-                            <Text style={styles.title}>Welcome to Dietlytic</Text>
+                            <Text style={styles.title}>Welcome to NutriHelp</Text>
                         </View>
                         <TouchableOpacity style={styles.profileButton}>
                             <Ionicons name="person-circle" size={32} color="#4ECDC4" />
@@ -129,7 +129,7 @@ export default function HomeScreen() {
                         <Text style={styles.quoteText}>
                             "Every small step towards better health is a victory worth celebrating."
                         </Text>
-                        <Text style={styles.quoteAuthor}>- Dietlytic Team</Text>
+                        <Text style={styles.quoteAuthor}>- NutriHelp Team</Text>
                     </View>
                 </View>
             </ScrollView>
