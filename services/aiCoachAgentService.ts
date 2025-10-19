@@ -437,6 +437,146 @@ export class AICoachAgentService {
   async refreshUserProfile(): Promise<void> {
     await this.initializeUserProfile();
   }
+
+  /**
+   * Process scanned food item and provide nutritional feedback
+   */
+  async processScannedFood(
+    foodName: string, 
+    nutritionData: NutritionData, 
+    imageUri?: string
+  ): Promise<CoachResponse> {
+    try {
+      // Refresh user profile
+      await this.initializeUserProfile();
+
+      if (!this.currentUserProfile) {
+        return {
+          message: "I need to access your profile to provide personalized advice. Please ensure you're logged in.",
+          success: false,
+          error: 'User profile not available'
+        };
+      }
+
+      try {
+        // Call backend API for AI Coach processing of scanned food
+        const response = await fetch(`${config.api.baseUrl}/chat/analyze-scanned-food`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            foodName,
+            nutritionData,
+            imageUri,
+            userId: this.currentUserProfile.id,
+            userContext: this.currentUserProfile,
+            conversationHistory: this.conversationHistory.slice(-10)
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Add to conversation history
+          this.conversationHistory.push({
+            role: 'user',
+            content: `I scanned ${foodName}`
+          });
+          this.conversationHistory.push({
+            role: 'assistant',
+            content: result.message
+          });
+
+          // Process the agent's response and take actions
+          const finalResult = await this.processAgentResponse(result, {
+            type: 'text',
+            content: `I scanned ${foodName}`,
+            timestamp: new Date()
+          });
+          return finalResult;
+        } else {
+          return {
+            message: result.message || "I'm sorry, I encountered an error analyzing your scanned food.",
+            success: false,
+            error: result.error
+          };
+        }
+      } catch (fetchError) {
+        // Fallback response when backend is not available
+        console.warn('Backend API not available, using fallback response:', fetchError);
+
+        const fallbackResponse = this.generateScannedFoodFallbackResponse(foodName, nutritionData);
+
+        // Add to conversation history
+        this.conversationHistory.push({
+          role: 'user',
+          content: `I scanned ${foodName}`
+        });
+        this.conversationHistory.push({
+          role: 'assistant',
+          content: fallbackResponse.message
+        });
+
+        return fallbackResponse;
+      }
+
+    } catch (error) {
+      console.error('AICoachAgent error processing scanned food:', error);
+      return {
+        message: "I'm experiencing technical difficulties analyzing your scanned food. Please try again in a moment.",
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  }
+
+  /**
+   * Generate fallback response for scanned food when backend is not available
+   */
+  private generateScannedFoodFallbackResponse(foodName: string, nutritionData: NutritionData): CoachResponse {
+    const calories = nutritionData.nf_calories;
+    const protein = nutritionData.nf_protein;
+    const carbs = nutritionData.nf_total_carbohydrate;
+    const fat = nutritionData.nf_total_fat;
+    const sugar = nutritionData.nf_sugars;
+    const sodium = nutritionData.nf_sodium;
+
+    let message = `Great! I can see you scanned ${foodName}. Here's what I found:\n\n`;
+    message += `📊 **Nutritional Information:**\n`;
+    message += `• Calories: ${calories} kcal\n`;
+    message += `• Protein: ${protein}g\n`;
+    message += `• Carbs: ${carbs}g\n`;
+    message += `• Fat: ${fat}g\n`;
+    message += `• Sugar: ${sugar}g\n`;
+    message += `• Sodium: ${sodium}mg\n\n`;
+
+    // Basic health feedback based on nutritional data
+    if (sugar > 15) {
+      message += `⚠️ **Note:** This item is high in sugar (${sugar}g). Consider moderation, especially if you're managing diabetes.\n\n`;
+    }
+
+    if (sodium > 600) {
+      message += `⚠️ **Note:** This item is high in sodium (${sodium}mg). Consider this if you're watching your blood pressure.\n\n`;
+    }
+
+    if (protein > 20) {
+      message += `✅ **Great choice!** This item is high in protein (${protein}g), which is excellent for muscle building and satiety.\n\n`;
+    }
+
+    message += `While my advanced AI features are temporarily unavailable, I can still help you track this meal. Would you like me to log this to your food history?`;
+
+    return {
+      message,
+      success: true,
+      actionTaken: 'none',
+      data: { foodName, nutritionData }
+    };
+  }
 }
 
 export const aiCoachAgentService = new AICoachAgentService();

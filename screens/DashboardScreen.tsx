@@ -25,6 +25,7 @@ import NutritionDisplay from '../components/NutritionDisplay';
 import SuggestionCard from '../components/SuggestionCard';
 import TestCameraFlow from '../components/TestCameraFlow';
 import { API_KEYS } from '../config/apiKeys';
+import { aiCoachAgentService } from '../services/aiCoachAgentService';
 import { AICoachAdvice, aiCoachService } from '../services/aiCoachService';
 import { imageUploadService } from '../services/imageUploadService';
 import { NutritionData, NutritionService } from '../services/nutritionService';
@@ -149,6 +150,9 @@ export default function DashboardScreen() {
       const foodAnalysis = aiCoachService.analyzeFood(nutrition);
       const advice = aiCoachService.generateAdvice(foodAnalysis);
       setAiAdvice(advice);
+
+      // Get AI Coach Agent feedback for the scanned food
+      await handleScannedFoodAnalyzed(food.food, nutrition);
     } catch (error) {
       console.error('Error fetching nutrition data:', error);
       Alert.alert('Error', 'Failed to fetch nutrition information. Please try again.');
@@ -195,6 +199,22 @@ export default function DashboardScreen() {
     // Refresh dashboard data when meal is logged via AI Coach
     console.log('Meal logged via AI Coach - refreshing dashboard');
     // You can add logic here to refresh the calorie data or other dashboard metrics
+  };
+
+  const handleScannedFoodAnalyzed = async (foodName: string, nutritionData: NutritionData, imageUri?: string) => {
+    try {
+      // Show AI Coach feedback for scanned food
+      const response = await aiCoachAgentService.processScannedFood(foodName, nutritionData, imageUri);
+      
+      // You could show this in a modal or notification
+      console.log('AI Coach feedback:', response.message);
+      
+      // Optionally show the AI Coach bubble with the feedback
+      // You could trigger the AI Coach to show the feedback
+      
+    } catch (error) {
+      console.error('Error getting AI Coach feedback for scanned food:', error);
+    }
   };
 
   const handleGoalUpdated = () => {

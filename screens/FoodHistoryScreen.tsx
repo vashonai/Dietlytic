@@ -1,52 +1,103 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
+import { Meal, supabaseService } from '../services/supabaseService';
 
 export default function FoodHistoryScreen() {
   const router = useRouter();
+  const [foodEntries, setFoodEntries] = useState<Meal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Mock data for demonstration
-  const foodEntries = [
-    {
-      id: 1,
-      name: 'Grilled Chicken Breast',
-      calories: 165,
-      time: '12:30 PM',
-      date: 'Today',
-    },
-    {
-      id: 2,
-      name: 'Mixed Green Salad',
-      calories: 45,
-      time: '1:15 PM',
-      date: 'Today',
-    },
-    {
-      id: 3,
-      name: 'Greek Yogurt',
-      calories: 100,
-      time: '3:00 PM',
-      date: 'Today',
-    },
-  ];
+  const loadFoodHistory = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Get meals from Supabase
+      const { data: meals, error } = await supabaseService.supabase
+        .from('meals')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-  const renderFoodEntry = (entry: any) => (
+      if (error) {
+        console.error('Error loading food history:', error);
+        setFoodEntries([]);
+        return;
+      }
+
+      setFoodEntries(meals || []);
+    } catch (error) {
+      console.error('Error loading food history:', error);
+      setFoodEntries([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadFoodHistory();
+    setRefreshing(false);
+  }, [loadFoodHistory]);
+
+  useEffect(() => {
+    loadFoodHistory();
+  }, [loadFoodHistory]);
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      return 'Today';
+    } else if (diffDays === 2) {
+      return 'Yesterday';
+    } else if (diffDays <= 7) {
+      return `${diffDays - 1} days ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const renderFoodEntry = (entry: Meal) => (
     <View key={entry.id} style={styles.foodCard}>
       <View style={styles.foodInfo}>
-        <Text style={styles.foodName}>{entry.name}</Text>
-        <Text style={styles.foodTime}>{entry.time} • {entry.date}</Text>
+        <Text style={styles.foodName}>
+          {entry.detected_items && entry.detected_items.length > 0 
+            ? entry.detected_items.join(', ') 
+            : 'Scanned Food'}
+        </Text>
+        <Text style={styles.foodTime}>
+          {formatTime(entry.created_at)} • {formatDateTime(entry.created_at)}
+        </Text>
+        {entry.image_type === 'camera' && (
+          <Text style={styles.scanIndicator}>📷 Camera Scan</Text>
+        )}
       </View>
-      <View style={styles.calorieInfo}>
-        <Text style={styles.calorieText}>{entry.calories} cal</Text>
+      <View style={styles.nutritionInfo}>
+        <Text style={styles.calorieText}>{Math.round(entry.total_calories)} cal</Text>
+        <Text style={styles.macroText}>
+          P: {Math.round(entry.total_protein)}g • C: {Math.round(entry.total_carbs)}g • F: {Math.round(entry.total_fat)}g
+        </Text>
       </View>
     </View>
   );
@@ -54,11 +105,21 @@ export default function FoodHistoryScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.content}>
           <Text style={styles.title}>My Food History</Text>
 
-          {foodEntries.length === 0 ? (
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007AFF" />
+              <Text style={styles.loadingText}>Loading your food history...</Text>
+            </View>
+          ) : foodEntries.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateIcon}>🍽️</Text>
               <Text style={styles.emptyStateTitle}>No food has been logged yet</Text>
@@ -192,6 +253,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#007AFF',
+  },
+  nutritionInfo: {
+    alignItems: 'flex-end',
+  },
+  macroText: {
+    fontSize: 12,
+    color: '#666666',
+    marginTop: 2,
+  },
+  scanIndicator: {
+    fontSize: 12,
+    color: '#4ECDC4',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666666',
+    marginTop: 12,
   },
   addMoreButton: {
     backgroundColor: '#ffffff',
