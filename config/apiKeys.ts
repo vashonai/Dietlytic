@@ -1,21 +1,28 @@
 // API Configuration
+// IMPORTANT: Replace these placeholder values with your actual API keys
+// Never commit real API keys to version control
 
 export const API_KEYS = {
-  // Google Cloud Vision API - Unrestricted key for testing
-  GOOGLE_VISION_API_KEY: 'AIzaSyC5FOXGzhz7hdKaiI62jwBA_NSKpfT796A',
+  // Google Cloud Vision API
+  GOOGLE_VISION_API_KEY: 'YOUR_GOOGLE_VISION_API_KEY_HERE',
   GOOGLE_VISION_API_URL: 'https://vision.googleapis.com/v1/images:annotate',
   
   // Nutritionix API
-  NUTRITIONIX_APP_ID: '36da032f',
-  NUTRITIONIX_API_KEY: '4e243366692bf0ab3208e0c7cb31a7c1',
+  NUTRITIONIX_APP_ID: 'YOUR_NUTRITIONIX_APP_ID_HERE',
+  NUTRITIONIX_API_KEY: 'YOUR_NUTRITIONIX_API_KEY_HERE',
   NUTRITIONIX_API_URL: 'https://trackapi.nutritionix.com',
   
   // Supabase Configuration
-  SUPABASE_URL: 'https://omkvqlfpzqoauakzhjcc.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ta3ZxbGZwenFvYXVha3poamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0MzUwMTEsImV4cCI6MjA3NjAxMTAxMX0.5vxnrflwJarqdhv27zLmsKOMpyhLMJ8nZ7gcpmKZA6c',
+  SUPABASE_URL: 'YOUR_SUPABASE_URL_HERE',
+  SUPABASE_ANON_KEY: 'YOUR_SUPABASE_ANON_KEY_HERE',
+  
+  // OpenAI API Configuration
+  OPENAI_API_KEY: 'YOUR_OPENAI_API_KEY_HERE',
 };
 
-// API Keys Configuration:
-// - Google Vision API: AIzaSyC5FOXGzhz7hdKaiI62jwBA_NSKpfT796A (unrestricted for testing)
-// - Nutritionix API: 36da032f / 4e243366692bf0ab3208e0c7cb31a7c1
-// - Supabase: https://omkvqlfpzqoauakzhjcc.supabase.co
+// Setup Instructions:
+// 1. Get your Google Vision API key from Google Cloud Console
+// 2. Get your Nutritionix API credentials from nutritionix.com
+// 3. Get your Supabase URL and anon key from supabase.com
+// 4. Get your OpenAI API key from platform.openai.com
+// 5. Replace the placeholder values above with your actual keys
