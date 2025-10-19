@@ -1,21 +1,26 @@
-// API Configuration
+// API Configuration - Uses environment variables for security
+// For development, set these environment variables in your .env file
 
 export const API_KEYS = {
-  // Google Cloud Vision API - Unrestricted key for testing
-  GOOGLE_VISION_API_KEY: 'AIzaSyC5FOXGzhz7hdKaiI62jwBA_NSKpfT796A',
+  // Google Cloud Vision API
+  GOOGLE_VISION_API_KEY: process.env.EXPO_PUBLIC_GOOGLE_VISION_API_KEY || '',
   GOOGLE_VISION_API_URL: 'https://vision.googleapis.com/v1/images:annotate',
   
   // Nutritionix API
-  NUTRITIONIX_APP_ID: '36da032f',
-  NUTRITIONIX_API_KEY: '4e243366692bf0ab3208e0c7cb31a7c1',
+  NUTRITIONIX_APP_ID: process.env.EXPO_PUBLIC_NUTRITIONIX_APP_ID || '',
+  NUTRITIONIX_API_KEY: process.env.EXPO_PUBLIC_NUTRITIONIX_API_KEY || '',
   NUTRITIONIX_API_URL: 'https://trackapi.nutritionix.com',
   
   // Supabase Configuration
-  SUPABASE_URL: 'https://omkvqlfpzqoauakzhjcc.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ta3ZxbGZwenFvYXVha3poamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0MzUwMTEsImV4cCI6MjA3NjAxMTAxMX0.5vxnrflwJarqdhv27zLmsKOMpyhLMJ8nZ7gcpmKZA6c',
+  SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL || '',
+  SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
+  
+  // OpenAI API Configuration
+  OPENAI_API_KEY: process.env.EXPO_PUBLIC_OPENAI_API_KEY || '',
 };
 
 // API Keys Configuration:
-// - Google Vision API: AIzaSyC5FOXGzhz7hdKaiI62jwBA_NSKpfT796A (unrestricted for testing)
-// - Nutritionix API: 36da032f / 4e243366692bf0ab3208e0c7cb31a7c1
-// - Supabase: https://omkvqlfpzqoauakzhjcc.supabase.co
+// - Google Vision API: Set EXPO_PUBLIC_GOOGLE_VISION_API_KEY in .env
+// - Nutritionix API: Set EXPO_PUBLIC_NUTRITIONIX_APP_ID and EXPO_PUBLIC_NUTRITIONIX_API_KEY in .env
+// - Supabase: Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in .env
+// - OpenAI: Set EXPO_PUBLIC_OPENAI_API_KEY in .env
